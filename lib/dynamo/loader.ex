@@ -100,8 +100,9 @@ defmodule Dynamo.Loader do
 
   ## Backend
 
-  defrecord Config, loaded_modules: [], loaded_files: [], paths: nil,
-    updated_at: { { 1970, 1, 1 }, { 0, 0, 0 } }, on_purge: []
+  defmodule Config do
+    defstruct [loaded_modules: [], loaded_files: [], paths: nil, updated_at: { { 1970, 1, 1 }, { 0, 0, 0 } }, on_purge: []]
+  end
 
   @doc false
   def start_link do
@@ -115,15 +116,15 @@ defmodule Dynamo.Loader do
 
   @doc false
   def init(paths) do
-    { :ok, Config[paths: paths] }
+    { :ok, %Config{paths: paths} }
   end
 
   @doc false
-  def handle_call(:paths, _from, Config[] = config) do
+  def handle_call(:paths, _from, %Config{} = config) do
     { :reply, config.paths, config }
   end
 
-  def handle_call(:conditional_purge, _from, Config[paths: paths, updated_at: updated_at] = config) do
+  def handle_call(:conditional_purge, _from, %Config{paths: paths, updated_at: updated_at} = config) do
     last_modified = last_modified(paths, updated_at)
 
     if last_modified == updated_at do
@@ -145,15 +146,15 @@ defmodule Dynamo.Loader do
   end
 
   @doc false
-  def handle_cast({ :loaded, file, modules }, Config[] = config) do
+  def handle_cast({ :loaded, file, modules }, %Config{} = config) do
     { :noreply, config.update_loaded_modules(&(modules ++ &1)).update_loaded_files(&([file|&1])) }
   end
 
-  def handle_cast({ :on_purge, fun }, Config[] = config) do
+  def handle_cast({ :on_purge, fun }, %Config{} = config) do
     { :noreply, config.update_on_purge(&([fun|&1])) }
   end
 
-  def handle_cast({ :append_paths, paths }, Config[] = config) do
+  def handle_cast({ :append_paths, paths }, %Config{} = config) do
     updated_at = last_modified(paths, config.updated_at)
     { :noreply, config.update_paths(&(&1 ++ paths)).updated_at(updated_at) }
   end
@@ -183,7 +184,7 @@ defmodule Dynamo.Loader do
 
   defp max_last_modified(path, latest) do
     case File.stat(path) do
-      { :ok, File.Stat[mtime: mtime] } -> max(latest, mtime)
+      { :ok, %File.Stat{mtime: mtime} } -> max(latest, mtime)
       { :error, _ } -> latest
     end
   end
