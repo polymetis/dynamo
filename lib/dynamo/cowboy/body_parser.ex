@@ -39,7 +39,7 @@ defmodule Dynamo.Cowboy.BodyParser do
         { path, { :ok, req } } = Dynamo.Connection.Utils.random_file("uploaded",
           tmp_dir, &parse_multipart_file(R.part_body(req), &1))
 
-        parse_multipart(R.part(req), tmp_dir, [{ name, file.path(path) }|acc])
+        parse_multipart(R.part(req), tmp_dir, [{ name, %Dynamo.Connection.File{file | path: path} }|acc])
 
       nil ->
         { :ok, req } = R.multipart_skip(req)

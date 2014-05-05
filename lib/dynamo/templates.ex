@@ -80,7 +80,7 @@ defmodule Dynamo.Templates do
   def compile_module(name, templates, locals, prelude) do
     { finders, _ } =
       Enum.map_reduce templates, 0, fn(%Dynamo.Template{} = template, i) ->
-        template = template.ref({ name, :"dynamo_template_#{i}" })
+        template = %Dynamo.Template{template | ref: { name, :"dynamo_template_#{i}" }}
         finder   = quote do
           def find(unquote(template.key)) do
             unquote(Macro.escape(template))
